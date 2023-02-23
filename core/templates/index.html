@@ -1,0 +1,28 @@
+<h1>Fall Armyworm Detection App</h1>
+<p>Upload Image and get Results.</p>
+<p>
+<small>
+    Uploaded images are not saved.
+</small>
+</p>
+
+<form method="post" enctype="multipart/form-data" style="margin-top: 50px; margin-bottom: 30px;">
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit" id="btnUpload" class="btn btn-primary">Upload</button>
+</form>
+
+{% if image_uri is not None %}
+    {% if predicted_label is not None %}
+        <div class="alert alert-primary" role="alert">
+            Predicted Results: <b>{{ predicted_label }}</b>
+        </div>
+    {% else %}
+        <div class="alert alert-danger" role="alert">
+            Prediction error. No label predicted.
+        </div>
+    {% endif %}
+
+    <img src="{{ image_uri }}" class="img-fluid" alt="Uploaded image"
+         style="max-width: min(500px, 100%); height: auto; margin-top: 30px;">
+{% endif %}
