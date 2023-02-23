@@ -8,7 +8,7 @@ import pathlib
 temp = pathlib.PosixPath
 pathlib.PosixPath = pathlib.WindowsPath
 BASE_DIR = Path(__file__).resolve().parent.parent
-filepath = os.path.join(BASE_DIR, 'classifier/model.pkl')
+filepath = os.path.join(BASE_DIR, 'classifier/resnet50_export.pkl')
 model = load_learner(filepath)
 classes = model.dls.vocab
 
