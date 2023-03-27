@@ -123,10 +123,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # location of static files in local development: https://learndjango.com/tutorials/django-favicon-tutorial
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'),]
 
-MEDIA_ROOT = (
-    BASE_DIR
-)
 MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 

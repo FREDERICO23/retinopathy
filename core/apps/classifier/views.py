@@ -1,9 +1,15 @@
 from django.shortcuts import render
-from .forms import ImageUploadForm
 from fastbook import *
 from fastai.vision.all import *
 from base64 import b64encode
 import pathlib
+from django.conf import settings
+from django.http import FileResponse
+
+
+from .forms import ImageUploadForm
+from .models import UploadedImage
+from .utils import generate_report
 
 temp = pathlib.PosixPath
 pathlib.PosixPath = pathlib.WindowsPath
@@ -28,18 +34,51 @@ def classify(img_file):
     }
 
 # Create your views here.
-def imageclassifier(request):
-    form = ImageUploadForm(request.POST, request.FILES)
-    result = {}
-    #print(result)
+# def imageclassifier(request):
+#     form = ImageUploadForm(request.POST, request.FILES)
+#     result = {}
+#     #print(result)
 
-    if form.is_valid():
-        image = [request.FILES['image'], form.cleaned_data['image'].file.read()]
-        result = classify(image)
+#     if form.is_valid():
+#         image = [request.FILES['image'], form.cleaned_data['image'].file.read()]
+#         result = classify(image)
     
-    context = {
-        'form' : form,
-        'result' : result,
-    }
+#     context = {
+#         'form' : form,
+#         'result' : result,
+#     }
 
-    return render(request, 'index.html', context)
+#     return render(request, 'index.html', context)
+
+
+def imageclassifier(request):
+    if request.method == 'POST':
+        form = ImageUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            uploaded_image = form.save(commit=False)
+            # Make a prediction using your custom function
+            # uploaded_image.prediction = classify(uploaded_image.image.path)
+            print("Absolute path:", os.path.join(settings.MEDIA_ROOT, uploaded_image.image.url[1:]))
+
+            uploaded_image.prediction = classify(os.path.join(settings.MEDIA_ROOT, uploaded_image.image.url[1:]))
+            print("Image path:", uploaded_image.image.path)
+            print("Image URL:", uploaded_image.image.url)
+            print("Absolute path:", os.path.join(settings.MEDIA_ROOT, uploaded_image.image.url[1:]))
+            uploaded_image.save()
+            print("Image path:", uploaded_image.image.path)
+
+            # Generate a report
+            report_file = generate_report()
+
+            return render(request, 'success.html') # Redirect to a success page
+
+    else:
+        form = ImageUploadForm()
+
+    return render(request, 'index.html', {'form': form})
+
+def download_report(request):
+    report_file = generate_report()
+    response = FileResponse(open(report_file, 'rb'), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{os.path.basename(report_file)}"'
+    return response

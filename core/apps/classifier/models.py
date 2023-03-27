@@ -1,3 +1,6 @@
 from django.db import models
 
-# Create your models here.
+class UploadedImage(models.Model):
+    image = models.ImageField(upload_to='uploaded_images/')
+    prediction = models.CharField(max_length=255, blank=True)
+    upload_date = models.DateTimeField(auto_now_add=True)
