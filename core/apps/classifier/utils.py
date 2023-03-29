@@ -1,12 +1,15 @@
 import csv
+import os
 from .models import UploadedImage
 
 def generate_report():
     # Define the report's filename and location
-    report_file = 'reports/report.csv'
+    report_file = 'reports/prediction-report.csv'
 
     # Get all the UploadedImage instances
     uploaded_images = UploadedImage.objects.all()
+
+    os.makedirs('reports', exist_ok=True)
 
     # Write the data to the CSV file
     with open(report_file, 'w', newline='') as csvfile:

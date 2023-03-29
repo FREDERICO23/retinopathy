@@ -19,10 +19,16 @@ model = load_learner(filepath)
 classes = model.dls.vocab
 
 def classify(img_file):
-    img = PILImage.create(img_file[0])
+    img = PILImage.create(img_file)
     prediction = model.predict(img)
     probs_list = prediction[2].numpy()
-    encoded = b64encode(img_file[1])
+     # Read the content of the uploaded image
+    content = img_file.read()    
+    # Encode the content
+    encoded = b64encode(content)    
+    # Reset the file pointer to the beginning of the file
+    img_file.seek(0)
+    # encoded = b64encode(img_file)
     encoded = encoded.decode('ascii')
     mime = "image/jpg"
     image_uri = "data:%s;base64,%s" % (mime, encoded)
@@ -50,22 +56,28 @@ def classify(img_file):
 
 #     return render(request, 'index.html', context)
 
+# Make a prediction using your custom function
+            # uploaded_image.prediction = classify(uploaded_image.image.path)
+            # print("Image file path:", os.path.join(settings.MEDIA_ROOT, uploaded_image.image.name))
+
+            # uploaded_image.prediction = classify(os.path.join(settings.MEDIA_ROOT, uploaded_image.image.name))            
+            # uploaded_image.save()
+            # print("Image path:", uploaded_image.image.path)
 
 def imageclassifier(request):
     if request.method == 'POST':
         form = ImageUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            uploaded_image = form.save(commit=False)
-            # Make a prediction using your custom function
-            # uploaded_image.prediction = classify(uploaded_image.image.path)
-            print("Absolute path:", os.path.join(settings.MEDIA_ROOT, uploaded_image.image.url[1:]))
+        
+        if form.is_valid():            
+            uploaded_image = UploadedImage()
+            uploaded_image.image = form.cleaned_data['image']            
+            media_path = os.path.join(settings.BASE_DIR, 'media', 'uploads')
+            if not os.path.exists(media_path):
+                os.makedirs(media_path)
+            
+            uploaded_image.prediction = classify(request.FILES['image'])
 
-            uploaded_image.prediction = classify(os.path.join(settings.MEDIA_ROOT, uploaded_image.image.url[1:]))
-            print("Image path:", uploaded_image.image.path)
-            print("Image URL:", uploaded_image.image.url)
-            print("Absolute path:", os.path.join(settings.MEDIA_ROOT, uploaded_image.image.url[1:]))
-            uploaded_image.save()
-            print("Image path:", uploaded_image.image.path)
+            uploaded_image = form.save(commit=False)            
 
             # Generate a report
             report_file = generate_report()
