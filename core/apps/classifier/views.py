@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from fastbook import *
 from fastai.vision.all import *
+import numpy as np
+
 from base64 import b64encode
 import pathlib
 from django.conf import settings
 from django.http import FileResponse
-
 
 from .forms import ImageUploadForm
 from .models import UploadedImage
@@ -17,6 +18,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 filepath = os.path.join(BASE_DIR, 'classifier/resnet50_export.pkl')
 model = load_learner(filepath)
 classes = model.dls.vocab
+
+
+def contains_maize_plant(img):
+    model = MobileNetV2(weights='imagenet')
+    
+    img = img.resize((224, 224))
+    img_array = keras_image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array = preprocess_input(img_array)
+
+    preds = model.predict(img_array)
+    decoded_preds = decode_predictions(preds, top=5)[0]
+
+    for pred in decoded_preds:
+        if 'maize' in pred[1].lower() or 'corn' in pred[1].lower():
+            return True
+
+    return False
 
 def classify(img_file):
     img = PILImage.create(img_file)
@@ -68,21 +87,28 @@ def imageclassifier(request):
     if request.method == 'POST':
         form = ImageUploadForm(request.POST, request.FILES)
         
-        if form.is_valid():            
-            uploaded_image = UploadedImage()
-            uploaded_image.image = form.cleaned_data['image']            
+        if form.is_valid():  
+
+            uploaded_image = form.save(commit=False) 
+            
             media_path = os.path.join(settings.BASE_DIR, 'media', 'uploads')
             if not os.path.exists(media_path):
                 os.makedirs(media_path)
             
             uploaded_image.prediction = classify(request.FILES['image'])
 
-            uploaded_image = form.save(commit=False)            
-
+              
+            # Save the uploaded_image instance to the database
+            uploaded_image.save()         
+    
+            context = {
+                'form' : form,
+                'result' : uploaded_image,}
+    
             # Generate a report
             report_file = generate_report()
 
-            return render(request, 'success.html') # Redirect to a success page
+            return render(request, 'success.html', context) # Redirect to a success page
 
     else:
         form = ImageUploadForm()

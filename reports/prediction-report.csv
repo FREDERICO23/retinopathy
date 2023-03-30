@@ -1,0 +1,6 @@
+id,image,prediction,upload_date
+1,C:\Users\Administrator\stud-projects\Armyworm\media\uploads\R.jpg,,2023-03-30 06:11:21
+2,C:\Users\Administrator\stud-projects\Armyworm\media\uploads\R_FyotfLN.jpg,"{'image': 'data:image/jpg;base64,', 'category': 1, 'probs': '99.65%', 'result': 'It is 99.65% 1!'}",2023-03-30 06:17:29
+3,C:\Users\Administrator\stud-projects\Armyworm\media\uploads\R_TYM4002.jpg,"{'image': 'data:image/jpg;base64,', 'category': 1, 'probs': '99.65%', 'result': 'It is 99.65% 1!'}",2023-03-30 06:17:38
+4,C:\Users\Administrator\stud-projects\Armyworm\media\uploads\R_1.jpg,"{'image': 'data:image/jpg;base64,', 'category': 0, 'probs': '99.28%', 'result': 'It is 99.28% 0!'}",2023-03-30 06:46:20
+5,C:\Users\Administrator\stud-projects\Armyworm\media\uploads\R_1_7hHRzmK.jpg,"{'image': 'data:image/jpg;base64,', 'category': 0, 'probs': '99.28%', 'result': 'It is 99.28% 0!'}",2023-03-30 06:47:08
