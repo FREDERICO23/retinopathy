@@ -20,23 +20,6 @@ model = load_learner(filepath)
 classes = model.dls.vocab
 
 
-def contains_maize_plant(img):
-    model = MobileNetV2(weights='imagenet')
-    
-    img = img.resize((224, 224))
-    img_array = keras_image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)
-    img_array = preprocess_input(img_array)
-
-    preds = model.predict(img_array)
-    decoded_preds = decode_predictions(preds, top=5)[0]
-
-    for pred in decoded_preds:
-        if 'maize' in pred[1].lower() or 'corn' in pred[1].lower():
-            return True
-
-    return False
-
 def classify(img_file):
     img = PILImage.create(img_file)
     prediction = model.predict(img)
