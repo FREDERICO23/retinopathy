@@ -19,52 +19,49 @@ filepath = os.path.join(BASE_DIR, 'classifier/resnet50_export.pkl')
 model = load_learner(filepath)
 classes = model.dls.vocab
 
+classes = {
+    0: 'healthy',
+    1: 'fall armyworm attack',
+}
+severity_levels = {
+    'healthy': ['low', 'medium', 'high'],
+    'fall armyworm attack': ['low', 'medium', 'high'],
+
+}
+
+def estimate_severity(category, probs):
+  
+    if probs < 0.6:
+        return severity_levels[category][0]  # Low severity
+    elif 0.6 <= probs < 0.85:
+        return severity_levels[category][1]  # Medium severity
+    else:
+        return severity_levels[category][2]  # High severity
+
 
 def classify(img_file):
     img = PILImage.create(img_file)
     prediction = model.predict(img)
     probs_list = prediction[2].numpy()
-     # Read the content of the uploaded image
     content = img_file.read()    
-    # Encode the content
     encoded = b64encode(content)    
-    # Reset the file pointer to the beginning of the file
     img_file.seek(0)
-    # encoded = b64encode(img_file)
     encoded = encoded.decode('ascii')
     mime = "image/jpg"
     image_uri = "data:%s;base64,%s" % (mime, encoded)
+
+    category = classes[prediction[1].item()] # Use the updated classes dictionary
+    probs = max(probs_list)
+    severity = estimate_severity(category, probs)
+
     return {
-        'image' : image_uri,
-        'category': classes[prediction[1].item()],
-        'probs': "{:.2%}".format(max(probs_list)),
-        'result': "It is {:.2%} {}!".format(max(probs_list), classes[prediction[1].item()])
+        'image': image_uri,
+        'category': category,
+        'probs': "{:.2%}".format(probs),
+        'severity': severity,
+        'result': "It is {:.2%} {}. Severity level: {}!".format(probs, category, severity)
     }
 
-# Create your views here.
-# def imageclassifier(request):
-#     form = ImageUploadForm(request.POST, request.FILES)
-#     result = {}
-#     #print(result)
-
-#     if form.is_valid():
-#         image = [request.FILES['image'], form.cleaned_data['image'].file.read()]
-#         result = classify(image)
-    
-#     context = {
-#         'form' : form,
-#         'result' : result,
-#     }
-
-#     return render(request, 'index.html', context)
-
-# Make a prediction using your custom function
-            # uploaded_image.prediction = classify(uploaded_image.image.path)
-            # print("Image file path:", os.path.join(settings.MEDIA_ROOT, uploaded_image.image.name))
-
-            # uploaded_image.prediction = classify(os.path.join(settings.MEDIA_ROOT, uploaded_image.image.name))            
-            # uploaded_image.save()
-            # print("Image path:", uploaded_image.image.path)
 
 def imageclassifier(request):
     if request.method == 'POST':
@@ -78,15 +75,15 @@ def imageclassifier(request):
             if not os.path.exists(media_path):
                 os.makedirs(media_path)
             
-            uploaded_image.prediction = classify(request.FILES['image'])
-
+            result = classify(request.FILES['image'])
+            uploaded_image.prediction = result
               
             # Save the uploaded_image instance to the database
             uploaded_image.save()         
     
             context = {
                 'form' : form,
-                'result' : uploaded_image,}
+                'result' : result,}
     
             # Generate a report
             report_file = generate_report()
@@ -97,6 +94,8 @@ def imageclassifier(request):
         form = ImageUploadForm()
 
     return render(request, 'index.html', {'form': form})
+
+
 
 def download_report(request):
     report_file = generate_report()

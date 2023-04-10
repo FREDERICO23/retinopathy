@@ -8,3 +8,4 @@ urlpatterns = [
     path('download_report/', views.download_report, name='download_report'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

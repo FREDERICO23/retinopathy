@@ -1,11 +1,42 @@
 <!DOCTYPE>
 <html>
     <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Image Classification Results</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: white;
+                color: black;
+                text-align: center;
+            }
+            .green {
+                background-color: #4CAF50;
+                padding: 10px 20px;
+                display: inline-block;
+                border-radius: 5px;
+                color: white;
+                font-size: 18px;
+                margin-top: 20px;
+            }
+        </style>
     </head>
+           
     <body>
-        <h5>Successfully Generated Prediction Report</h5><br>
-        <button>
+        <h1>Image Classification Results</h1>
+        <img src="{{ result.image }}" alt="Uploaded image" width="300px">
+        <h3>{{ result.category }}</h3>
+        <p>Confidence: {{ result.probs }}</p>
+        <p>Severity level: {{ result.severity }}</p>
+        <div class="green">
+            {{ result.result }}
+        </div>
+        <p><a href="{% url 'image-classifier' %}">Upload another image</a></p>
+        <p><a href="{% url 'download_report' %}">Download Report</a></p>
+        {% comment %} <button>
         <a href="{% url 'download_report' %}">Download Report</a>
-        </button>
+        </button> {% endcomment %}
     </body>
 </html>
