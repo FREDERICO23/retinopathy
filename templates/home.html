@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Farm Landing Page</title>
+    <style>
+      /* Define the background image */
+      body {
+        background-image: url("b4.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;        
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+          
+      }
+      
+      /* Style the buttons */
+      .button {
+        background-color: green;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 10px;
+        cursor: pointer;
+      }
+      
+      /* Style the sign-up button */
+      .signup {
+        background-color: orange;
+      }
+      
+      /* Style the sign-in button */
+      .signin {
+        background-color: green;
+      }
+    </style>
+  </head>
+  <body>    
+    <div class="container">
+      <h1>Welcome to Agricaptcha</h1>
+    <br>
+      <img src="{% static 'agricaptcha1.png' %}" alt="Maize Farm">
+      <br>
+      <h2>What we do</h2>
+      <p>We help farmers to identify pests and diseases on their farms</p>
+      <p>Our AI tools help you to identify pests and diseases on your farm</p>
+      <br>
+      <div class="buttons">
+        <a href="{% url 'register' %}" class="button signup">Sign up</a>
+        <a href="{% url 'login' %}" class="button signin">Sign in</a>
+        
+      </div>
+    </div>
+    <br>
+    
+  </body>
+</html>

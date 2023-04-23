@@ -6,11 +6,64 @@ import numpy as np
 from base64 import b64encode
 import pathlib
 from django.conf import settings
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 
 from .forms import ImageUploadForm
 from .models import UploadedImage
 from .utils import generate_report
+
+from django.contrib.auth import get_user_model
+from django.shortcuts import render, redirect
+from django.contrib.auth import login,logout, authenticate
+from django.contrib import messages
+from .forms import SignUpForm, UserLoginForm
+from .models import UploadedImage
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from django.utils import timezone
+
+User = get_user_model()
+
+def home(request):
+    return render(request, "home.html")
+
+def register(request):
+    if request.method == "POST":
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "Registration successful." )
+            return redirect("image-classifier")
+        messages.error(request, "Unsuccessful registration. Invalid information.")
+    form = SignUpForm()
+    return render (request,"signup.html", {"register_form":form})
+
+def logout_request(request):
+    logout(request)
+    messages.info(request, "You've successfully logged out")
+    return redirect("image-classifier")
+
+def login_request(request):
+    if request.method == "POST":
+        form = UserLoginForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.info(request, f"You are now logged in as {username}.")
+                return redirect("image-classifier")
+            else:
+                messages.error(request,"Invalid username or password.")
+        else:
+            messages.error(request,"Invalid username or password.")
+    form = UserLoginForm()
+    return render(request, "login.html", {"login_form":form})
+
+
+""" Model Inference"""
 
 temp = pathlib.PosixPath
 pathlib.PosixPath = pathlib.WindowsPath
@@ -68,9 +121,8 @@ def imageclassifier(request):
         form = ImageUploadForm(request.POST, request.FILES)
         
         if form.is_valid():  
-
-            uploaded_image = form.save(commit=False) 
-            
+            uploaded_image = form.save(commit=False) # don't commit to database yet
+            # uploaded_image.image = request.FILES['image']
             media_path = os.path.join(settings.BASE_DIR, 'media', 'uploads')
             if not os.path.exists(media_path):
                 os.makedirs(media_path)
@@ -79,15 +131,15 @@ def imageclassifier(request):
             uploaded_image.prediction = result
               
             # Save the uploaded_image instance to the database
-            uploaded_image.save()         
-    
+            
+            uploaded_image._committed = True # set _committed attribute to True
+            uploaded_image.save() # now save to database
+            UploadedImage.objects.create(image=uploaded_image.image, result=result, date=timezone.now())
+
             context = {
                 'form' : form,
                 'result' : result,}
     
-            # Generate a report
-            report_file = generate_report()
-
             return render(request, 'success.html', context) # Redirect to a success page
 
     else:
@@ -95,6 +147,23 @@ def imageclassifier(request):
 
     return render(request, 'index.html', {'form': form})
 
+def generate_report(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    preds = UploadedImage.objects.all()
+
+    # Generate the PDF report
+    template_path = 'report.html'
+    context = {'predictions': preds}
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="report.pdf"'
+    template = get_template(template_path)
+    html = template.render(context)
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('An error occurred while generating the PDF.')
+    return response
 
 
 def download_report(request):
