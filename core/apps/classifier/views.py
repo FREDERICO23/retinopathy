@@ -2,7 +2,7 @@ from django.shortcuts import render
 from fastbook import *
 from fastai.vision.all import *
 import numpy as np
-
+import base64
 from base64 import b64encode
 import pathlib
 from django.conf import settings
@@ -21,6 +21,7 @@ from .models import UploadedImage
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.utils import timezone
+
 
 User = get_user_model()
 
@@ -68,18 +69,23 @@ def login_request(request):
 temp = pathlib.PosixPath
 pathlib.PosixPath = pathlib.WindowsPath
 BASE_DIR = Path(__file__).resolve().parent.parent
-filepath = os.path.join(BASE_DIR, 'classifier/resnet50_export.pkl')
+filepath = os.path.join(BASE_DIR, 'classifier/resnet50_model.pkl')
 model = load_learner(filepath)
 classes = model.dls.vocab
 
 classes = {
-    0: 'healthy',
-    1: 'fall armyworm attack',
+    0: 'No_dr',
+    1: 'mild',
+    2: 'severe',
+    3: 'moderate',
+    4: 'proliferative',
 }
 severity_levels = {
-    'healthy': ['low', 'medium', 'high'],
-    'fall armyworm attack': ['low', 'medium', 'high'],
-
+    'No_dr': ['low', 'medium', 'high'],
+    'mild': ['low', 'medium', 'high'],
+    'severe': ['low', 'medium', 'high'],
+    'moderate': ['low', 'medium', 'high'],
+    'proliferative': ['low', 'medium', 'high'],
 }
 
 def estimate_severity(category, probs):
@@ -92,7 +98,7 @@ def estimate_severity(category, probs):
         return severity_levels[category][2]  # High severity
 
 
-def classify(img_file):
+def classify(img_file):  
     img = PILImage.create(img_file)
     prediction = model.predict(img)
     probs_list = prediction[2].numpy()
@@ -103,7 +109,7 @@ def classify(img_file):
     mime = "image/jpg"
     image_uri = "data:%s;base64,%s" % (mime, encoded)
 
-    category = classes[prediction[1].item()] # Use the updated classes dictionary
+    category = classes[torch.argmax(prediction[0]).item()] 
     probs = max(probs_list)
     severity = estimate_severity(category, probs)
 
